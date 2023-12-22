@@ -1,0 +1,38 @@
+---
+- name: Install Plex Media Server via APT repository
+  hosts: plexcontainer
+  remote_user: mike
+
+  tasks:
+    - name: Update repositories cache and install available upgrades
+      become: true
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install curl, net-tools, and gnupg2
+      become: true
+      ansible.builtin.apt:
+        pkg:
+          - curl
+          - net-tools
+          - gnupg2
+
+    - name: Add Plex repository
+      become: true
+      block:
+        - name: Add Plex repository APT key
+          ansible.builtin.get_url:
+            url: https://downloads.plex.tv/plex-keys/PlexSign.key
+            dest: /etc/apt/keyrings/PlexSign.key
+    
+        - name: Add Plex repository
+          ansible.builtin.apt_repository:
+            repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/PlexSign.key] https://downloads.plex.tv/repo/deb public main"
+            state: present
+
+    - name: Update repositories cache and install Plex Media Server
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        name: plexmediaserver
