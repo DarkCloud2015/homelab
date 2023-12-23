@@ -1,0 +1,37 @@
+---
+- name: Install Pi-Hole via GitHub repository
+  hosts: pihole
+  remote_user: mike
+
+  tasks:
+    - name: Update repositories cache and install available upgrades
+      become: true
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install curl, net-tools, and gnupg2
+      become: true
+      ansible.builtin.apt:
+        pkg:
+          - curl
+          - net-tools
+          - gnupg2
+          - git
+
+    - name: Clone Pi-Hole repo
+      ansible.builtin.git:
+        repo: https://github.com/pi-hole/pi-hole.git
+        depth: 1
+        dest: /home/mike/downloads/pi-hole
+        version: master
+
+    - name: Create setupVars.conf file
+      become: true
+      ansible.builtin.shell: mkdir /etc/pihole/ && touch /etc/pihole/setupVars.conf
+
+    - name: Run Pi-Hole basic installation script
+      become: true
+      ansible.builtin.shell: >
+        '/home/mike/downloads/pi-hole/automated install/basic-install.sh' --unattended >>
+        /home/mike/downloads/pihole_install.log 
